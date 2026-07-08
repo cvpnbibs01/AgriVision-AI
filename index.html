@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgriVision AI — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --canopy:#1B4332;
+    --canopy-dark:#0F2A1E;
+    --fern:#40916C;
+    --fern-light:#95D5B2;
+    --amber:#E8A33D;
+    --amber-dark:#8A5A17;
+    --clay:#8B5E34;
+    --rust:#B3401E;
+    --parchment:#F7F3E8;
+    --parchment-dark:#EAE3D2;
+    --ink:#1F2A24;
+    --ink-soft:#5B6660;
+    --paper:#FFFFFF;
+    --line:#DAD3C0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--canopy-dark);
+    font-family:'Work Sans',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 16px;
+  }
+  .display{font-family:'Fraunces',serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  .phone{
+    width:390px;
+    max-width:100%;
+    background:var(--canopy);
+    border-radius:44px;
+    padding:14px;
+    box-shadow:0 30px 60px rgba(0,0,0,0.45);
+  }
+  .screen{
+    background:var(--parchment);
+    border-radius:32px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    height:800px;
+  }
+  .statusbar{
+    height:34px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 22px;
+    font-size:12px;
+    font-weight:600;
+    color:var(--canopy);
+    flex-shrink:0;
+  }
+  .statusbar .dots{display:flex;gap:4px;align-items:center;}
+  .statusbar .bar{width:3px;background:var(--canopy);border-radius:1px;}
+  .lang-toggle{display:flex;gap:2px;background:var(--parchment-dark);border-radius:20px;padding:2px;}
+  .lang-btn{border:none;background:transparent;font-size:10px;font-weight:700;letter-spacing:0.03em;padding:3px 9px;border-radius:16px;cursor:pointer;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
+  .lang-btn.active{background:var(--canopy);color:var(--parchment);}
+
+  .content{
+    flex:1;
+    overflow-y:auto;
+    padding:0 22px 20px;
+    display:flex;
+    flex-direction:column;
+  }
+  .content::-webkit-scrollbar{width:0;}
+
+  .view{display:none;flex-direction:column;flex:1;}
+  .view.active{display:flex;}
+
+  /* ---- brand header ---- */
+  .brand-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:18px 0 8px;
+  }
+  .leaf-mark{width:34px;height:34px;flex-shrink:0;}
+  .brand-title{font-size:19px;font-weight:600;color:var(--canopy);line-height:1.1;}
+  .brand-title .ai{color:var(--amber-dark);}
+  .brand-sub{font-size:12.5px;color:var(--ink-soft);margin-top:1px;}
+
+  .step-header{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:16px 0 14px;
+  }
+  .back-btn{
+    width:32px;height:32px;border-radius:50%;
+    background:var(--paper);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;flex-shrink:0;
+  }
+  .step-title{font-size:16px;font-weight:600;color:var(--canopy);}
+
+  /* ---- buttons ---- */
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    border:none;border-radius:14px;padding:15px 18px;
+    font-family:'Work Sans',sans-serif;font-weight:600;font-size:15px;
+    cursor:pointer;width:100%;
+  }
+  .btn-primary{background:var(--amber);color:var(--canopy-dark);}
+  .btn-primary:active{background:var(--amber-dark);color:var(--paper);}
+  .btn-secondary{background:var(--paper);color:var(--canopy);border:1.5px solid var(--canopy);}
+  .btn-ghost{background:transparent;color:var(--ink-soft);border:1.5px dashed var(--line);}
+
+  /* ---- upload step ---- */
+  .upload-hero{
+    flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;gap:22px;padding-bottom:20px;
+  }
+  .upload-hero .lead{font-size:14.5px;color:var(--ink-soft);max-width:270px;line-height:1.5;}
+  .capture-ring{
+    width:150px;height:150px;border-radius:50%;
+    border:2px dashed var(--fern);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .capture-actions{width:100%;display:flex;flex-direction:column;gap:10px;}
+  .fineprint{font-size:11.5px;color:var(--ink-soft);text-align:center;margin-top:14px;}
+
+  /* ---- preview step ---- */
+  .preview-frame{
+    border-radius:18px;overflow:hidden;border:1px solid var(--line);
+    aspect-ratio:1/1;background:var(--parchment-dark);margin-bottom:16px;
+  }
+  .preview-frame img{width:100%;height:100%;object-fit:cover;display:block;}
+  .preview-actions{display:flex;flex-direction:column;gap:10px;margin-top:auto;padding-top:14px;}
+
+  /* ---- analyzing step ---- */
+  .analyzing-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;}
+  .scan-caption{font-size:14px;color:var(--canopy);font-weight:500;min-height:20px;text-align:center;}
+
+  /* ---- result step ---- */
+  .result-head{padding:6px 0 4px;}
+  .result-crop{font-size:13px;color:var(--ink-soft);font-weight:500;}
+  .result-disease{font-size:24px;font-weight:600;color:var(--canopy);margin-top:2px;}
+  .confidence-row{display:flex;align-items:baseline;gap:6px;margin-top:6px;}
+  .confidence-val{font-size:15px;font-weight:600;}
+  .confidence-label{font-size:12px;color:var(--ink-soft);}
+
+  .severity-card{
+    display:flex;align-items:center;gap:16px;
+    background:var(--paper);border-radius:16px;border:1px solid var(--line);
+    padding:14px 16px;margin:14px 0;
+  }
+  .severity-gauge{width:52px;height:60px;flex-shrink:0;}
+  .severity-info .sev-label{font-size:16px;font-weight:600;}
+  .severity-info .sev-desc{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+
+  .card{
+    background:var(--paper);border-radius:16px;border:1px solid var(--line);
+    padding:14px 16px;margin-bottom:12px;
+  }
+  .card-label{font-size:11.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);font-weight:600;margin-bottom:8px;}
+  .pill-list{display:flex;flex-direction:column;gap:6px;}
+  .pill{
+    display:flex;align-items:center;gap:8px;font-size:14px;
+  }
+  .pill .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .dot-treat{background:var(--fern);}
+  .dot-organic{background:var(--clay);}
+
+  .stat-row{display:flex;gap:12px;margin-bottom:14px;}
+  .stat-box{flex:1;background:var(--paper);border-radius:14px;border:1px solid var(--line);padding:12px 14px;}
+  .stat-box .stat-label{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:0.05em;}
+  .stat-box .stat-val{font-size:16px;font-weight:600;margin-top:3px;}
+
+  .result-actions{display:flex;flex-direction:column;gap:10px;margin-top:auto;padding-top:8px;}
+  .saved-tag{
+    display:flex;align-items:center;gap:6px;justify-content:center;
+    font-size:12px;color:var(--fern);font-weight:600;margin-top:10px;
+  }
+
+  /* ---- history ---- */
+  .history-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--paper);border-radius:14px;border:1px solid var(--line);
+    padding:12px 14px;margin-bottom:9px;
+  }
+  .history-main .h-disease{font-size:14.5px;font-weight:600;color:var(--canopy);}
+  .history-main .h-meta{font-size:12px;color:var(--ink-soft);margin-top:2px;}
+  .h-right{text-align:right;flex-shrink:0;}
+  .h-conf{font-size:12.5px;font-weight:600;}
+  .chip{
+    font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:20px;margin-top:4px;display:inline-block;
+  }
+  .empty-state{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:10px;color:var(--ink-soft);
+  }
+  .empty-state .display{font-size:16px;color:var(--canopy);}
+
+  /* ---- guide ---- */
+  .guide-item{
+    background:var(--paper);border-radius:14px;border:1px solid var(--line);
+    margin-bottom:9px;overflow:hidden;
+  }
+  .guide-summary{
+    padding:13px 14px;display:flex;align-items:center;justify-content:between;gap:10px;
+    cursor:pointer;list-style:none;
+  }
+  .guide-summary::-webkit-details-marker{display:none;}
+  .guide-summary-row{display:flex;align-items:center;justify-content:space-between;width:100%;}
+  .guide-name{font-size:14.5px;font-weight:600;color:var(--canopy);}
+  .chev{transition:transform 0.15s ease;color:var(--ink-soft);}
+  details[open] .chev{transform:rotate(180deg);}
+  .guide-body{padding:0 14px 14px;font-size:13px;color:var(--ink-soft);line-height:1.55;}
+  .guide-body .g-block{margin-top:8px;}
+  .guide-body .g-block b{color:var(--ink);font-weight:600;}
+
+  /* ---- tab bar ---- */
+  .tabbar{
+    display:flex;border-top:1px solid var(--line);background:var(--paper);
+    flex-shrink:0;
+  }
+  .tab{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:10px 0 12px;cursor:pointer;color:var(--ink-soft);
+  }
+  .tab.active{color:var(--canopy);}
+  .tab span{font-size:11px;font-weight:500;}
+
+  /* ---- scan animation ---- */
+  #scanBeam{animation:beamSweep 1.8s ease-in-out infinite;}
+  @keyframes beamSweep{0%{transform:translateY(0);}50%{transform:translateY(112px);}100%{transform:translateY(0);}}
+  #vein1,#vein2,#vein3,#vein4,#vein5{animation:veinPulse 2.2s ease-in-out infinite;}
+  #vein2,#vein4{animation-delay:0.3s;}
+  #vein3,#vein5{animation-delay:0.6s;}
+  @keyframes veinPulse{0%,100%{opacity:0.25;}50%{opacity:1;}}
+
+  /* ---- misc ---- */
+  .hidden-input{display:none;}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="screen">
+    <div class="statusbar">
+      <span id="clock">9:41</span>
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="langEnBtn" onclick="setLang('en')" aria-label="English">EN</button>
+        <button class="lang-btn" id="langHaBtn" onclick="setLang('ha')" aria-label="Hausa">HA</button>
+      </div>
+      <div class="dots">
+        <div class="bar" style="height:6px;"></div>
+        <div class="bar" style="height:8px;"></div>
+        <div class="bar" style="height:10px;"></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- SCAN TAB: upload step -->
+      <div class="view active" id="view-upload" data-tab="scan">
+        <div class="brand-header">
+          <svg class="leaf-mark" viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="20" fill="#1B4332"/>
+            <path d="M12 26C12 16 20 10 29 11C29 20 24 28 14 28C13.2 28 12.4 27.8 12 27.5" stroke="#95D5B2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14 27C16 22 19 18 24 15" stroke="#95D5B2" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+          <div>
+            <div class="brand-title">AgriVision <span class="ai">AI</span></div>
+            <div class="brand-sub" id="appSubText">Crop disease detection for the field</div>
+          </div>
+        </div>
+
+        <div class="upload-hero">
+          <div class="capture-ring">
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+              <rect x="8" y="18" width="44" height="30" rx="5" stroke="#40916C" stroke-width="2.2"/>
+              <circle cx="30" cy="33" r="9" stroke="#40916C" stroke-width="2.2"/>
+              <rect x="21" y="12" width="12" height="7" rx="2" fill="#40916C"/>
+            </svg>
+          </div>
+          <div>
+            <div class="display" style="font-size:18px;color:var(--canopy);font-weight:600;" id="scanHeroTitle">Scan a leaf</div>
+            <p class="lead" id="scanHeroLead">Point your camera at the affected leaf, or upload a photo you already have. Good light and a close, in-focus shot work best.</p>
+          </div>
+          <div class="capture-actions">
+            <button class="btn btn-primary" onclick="document.getElementById('cameraInput').click()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13.5" r="3.3" stroke="currentColor" stroke-width="2"/><path d="M8 7L9.5 4H14.5L16 7" stroke="currentColor" stroke-width="2"/></svg>
+              <span id="takePhotoText">Take a photo</span>
+            </button>
+            <button class="btn btn-secondary" onclick="document.getElementById('galleryInput').click()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="9.5" r="1.6" fill="currentColor"/><path d="M4 17L9 12L13 15L16 12L20 16" stroke="currentColor" stroke-width="2"/></svg>
+              <span id="uploadGalleryText">Upload from gallery</span>
+            </button>
+          </div>
+        </div>
+        <p class="fineprint" id="fineprintText">Live AI vision analysis · runs best with good lighting</p>
+        <input class="hidden-input" type="file" id="cameraInput" accept="image/*" capture="environment">
+        <input class="hidden-input" type="file" id="galleryInput" accept="image/*">
+      </div>
+
+      <!-- SCAN TAB: preview step -->
+      <div class="view" id="view-preview" data-tab="scan">
+        <div class="step-header">
+          <div class="back-btn" onclick="goTo('upload')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#1B4332" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="step-title" id="confirmPhotoTitle">Confirm photo</div>
+        </div>
+        <div class="preview-frame"><img id="previewImg" alt="Selected leaf"></div>
+        <p class="lead" style="text-align:center;" id="confirmLeadText">Make sure the affected area is clearly visible and in focus.</p>
+        <div class="preview-actions">
+          <button class="btn btn-primary" onclick="runAnalysis()"><span id="analyzeLeafText">Analyze leaf</span></button>
+          <button class="btn btn-ghost" onclick="goTo('upload')"><span id="retakePhotoText">Retake photo</span></button>
+        </div>
+      </div>
+
+      <!-- SCAN TAB: analyzing step -->
+      <div class="view" id="view-analyzing" data-tab="scan">
+        <div class="analyzing-wrap">
+          <svg width="140" height="150" viewBox="0 0 140 150" fill="none">
+            <path id="leafOutline" d="M70 8C108 18 128 60 128 84C128 118 102 140 70 140C38 140 12 118 12 84C12 60 32 18 70 8Z" fill="#FFFFFF" stroke="#1B4332" stroke-width="2.5"/>
+            <path id="vein1" d="M70 20V128" stroke="#40916C" stroke-width="2" stroke-linecap="round" stroke-dasharray="120" stroke-dashoffset="120"/>
+            <path id="vein2" d="M70 50C55 55 42 62 30 72" stroke="#40916C" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="60" stroke-dashoffset="60"/>
+            <path id="vein3" d="M70 50C85 55 98 62 110 72" stroke="#40916C" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="60" stroke-dashoffset="60"/>
+            <path id="vein4" d="M70 78C58 84 48 90 38 98" stroke="#40916C" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="55" stroke-dashoffset="55"/>
+            <path id="vein5" d="M70 78C82 84 92 90 102 98" stroke="#40916C" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="55" stroke-dashoffset="55"/>
+            <rect id="scanBeam" x="8" y="14" width="124" height="4" fill="#E8A33D" opacity="0.85"/>
+          </svg>
+          <div class="scan-caption mono" id="scanCaption">Reading leaf texture…</div>
+        </div>
+      </div>
+
+      <!-- SCAN TAB: result step -->
+      <div class="view" id="view-result" data-tab="scan">
+        <div class="step-header">
+          <div class="back-btn" onclick="goTo('upload')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 18L9 12L15 6" stroke="#1B4332" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="step-title" id="diagnosisTitleText">Diagnosis</div>
+        </div>
+
+        <div class="result-head">
+          <div class="result-crop" id="resCrop">Tomato</div>
+          <div class="result-disease" id="resDisease">Late Blight</div>
+          <div class="confidence-row">
+            <span class="confidence-val mono" id="resConfidence">96.8%</span>
+            <span class="confidence-label" id="modelConfidenceLabel">model confidence</span>
+          </div>
+        </div>
+
+        <div class="severity-card">
+          <svg class="severity-gauge" id="sevGaugeSvg" viewBox="0 0 52 60" fill="none">
+            <defs><clipPath id="leafClip"><path d="M26 3C42 9 49 26 49 36C49 49 39 57 26 57C13 57 3 49 3 36C3 26 10 9 26 3Z"/></clipPath></defs>
+            <rect x="0" y="0" width="52" height="60" fill="#EAE3D2" clip-path="url(#leafClip)"/>
+            <rect id="sevFillRect" x="0" width="52" height="60" fill="#40916C" clip-path="url(#leafClip)"/>
+            <path d="M26 3C42 9 49 26 49 36C49 49 39 57 26 57C13 57 3 49 3 36C3 26 10 9 26 3Z" stroke="#1B4332" stroke-width="2"/>
+          </svg>
+          <div class="severity-info">
+            <div class="sev-label" id="sevLabel">Moderate</div>
+            <div class="sev-desc" id="sevDesc">~45% of visible leaf area affected</div>
+          </div>
+        </div>
+
+        <div id="treatmentBlock">
+          <div class="card">
+            <div class="card-label" id="recommendedTreatmentLabel">Recommended treatment</div>
+            <div class="pill-list" id="treatList"></div>
+          </div>
+          <div class="card">
+            <div class="card-label" id="organicAlternativeLabel">Organic alternative</div>
+            <div class="pill-list"><div class="pill"><span class="dot dot-organic"></span><span id="organicText"></span></div></div>
+          </div>
+          <div class="stat-row">
+            <div class="stat-box"><div class="stat-label" id="estCostLabel">Est. cost</div><div class="stat-val mono" id="costText">—</div></div>
+            <div class="stat-box"><div class="stat-label" id="recoveryLabelText">Recovery</div><div class="stat-val" id="recoveryText">—</div></div>
+          </div>
+        </div>
+
+        <div id="healthyBlock" style="display:none;">
+          <div class="card">
+            <div class="card-label" id="keepHealthyLabel">Keep it healthy</div>
+            <div class="pill-list" id="preventList"></div>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn btn-primary" onclick="resetScan()"><span id="scanAnotherText">Scan another leaf</span></button>
+        </div>
+        <div class="saved-tag" id="savedTag">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 13L10 18L20 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="savedToHistoryText">Saved to history</span>
+        </div>
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div class="view" id="view-history" data-tab="history">
+        <div class="brand-header" style="padding-top:18px;">
+          <div>
+            <div class="brand-title" style="font-size:18px;" id="historyTitleText">Diagnosis history</div>
+            <div class="brand-sub" id="historySubText">Every scan saved on this device</div>
+          </div>
+        </div>
+        <div id="historyList" style="margin-top:6px;"></div>
+      </div>
+
+      <!-- GUIDE TAB -->
+      <div class="view" id="view-guide" data-tab="guide">
+        <div class="brand-header" style="padding-top:18px;">
+          <div>
+            <div class="brand-title" style="font-size:18px;" id="guideTitleText">Offline guide</div>
+            <div class="brand-sub" id="guideSubText">Symptoms, treatment and prevention — no signal needed</div>
+          </div>
+        </div>
+        <div id="guideList" style="margin-top:6px;"></div>
+      </div>
+
+    </div>
+
+    <nav class="tabbar">
+      <div class="tab active" data-tabbtn="scan" onclick="switchTab('scan')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="3" y="7" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13.5" r="3.2" stroke="currentColor" stroke-width="2"/></svg>
+        <span id="tabScanText">Scan</span>
+      </div>
+      <div class="tab" data-tabbtn="history" onclick="switchTab('history')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7V12L15.5 14.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span id="tabHistoryText">History</span>
+      </div>
+      <div class="tab" data-tabbtn="guide" onclick="switchTab('guide')">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H12V20H5.5C4.7 20 4 19.3 4 18.5V5.5Z" stroke="currentColor" stroke-width="2"/><path d="M20 5.5C20 4.7 19.3 4 18.5 4H12V20H18.5C19.3 20 20 19.3 20 18.5V5.5Z" stroke="currentColor" stroke-width="2"/></svg>
+        <span id="tabGuideText">Guide</span>
+      </div>
+    </nav>
+  </div>
+</div>
+
+<script>
+const treatmentDB = {
+en: {
+  "Healthy": {
+    label: "Healthy",
+    symptoms: "No visible disease symptoms. Leaf colour and texture are within normal range.",
+    treatment: [], organic: "", cost: "₦0", recovery: "—",
+    prevention: ["Keep up regular scouting every 3–4 days.", "Maintain balanced watering, avoid waterlogging.", "Rotate crops each season to break pest cycles."]
+  },
+  "Late Blight": {
+    label: "Late Blight",
+    symptoms: "Dark, water-soaked patches that spread quickly, often with white mould underneath in humid weather.",
+    treatment: ["Mancozeb 80% WP, spray every 7 days", "Copper-based fungicide as a follow-up spray"],
+    organic: "Neem oil spray every 5–7 days", cost: "₦2,000 – ₦3,000 / acre", recovery: "7–14 days",
+    prevention: ["Avoid overhead irrigation late in the day.", "Space plants to improve airflow.", "Remove and burn infected leaves promptly."]
+  },
+  "Early Blight": {
+    label: "Early Blight",
+    symptoms: "Concentric brown rings (\"target spots\") appearing on older, lower leaves first.",
+    treatment: ["Chlorothalonil spray", "Mancozeb as an alternative"],
+    organic: "Baking-soda and neem oil mix", cost: "₦1,500 – ₦2,500 / acre", recovery: "10–14 days",
+    prevention: ["Mulch to stop soil splash onto lower leaves.", "Rotate away from tomato family for 2 seasons.", "Stake plants to keep foliage off the ground."]
+  },
+  "Leaf Mold": {
+    label: "Leaf Mold",
+    symptoms: "Pale yellow patches on top of leaves with olive-green velvety mould underneath.",
+    treatment: ["Copper fungicide spray", "Improve ventilation in greenhouse or shade net"],
+    organic: "Diluted milk spray, 1 part milk to 9 parts water", cost: "₦1,800 – ₦2,800 / acre", recovery: "7–10 days",
+    prevention: ["Reduce humidity around plants.", "Avoid wetting leaves when watering.", "Prune lower leaves for airflow."]
+  },
+  "Bacterial Spot": {
+    label: "Bacterial Spot",
+    symptoms: "Small, dark, greasy-looking spots with yellow halos on leaves and fruit.",
+    treatment: ["Copper-based bactericide", "Streptomycin spray where locally approved"],
+    organic: "Copper soap spray", cost: "₦2,200 – ₦3,200 / acre", recovery: "10–21 days",
+    prevention: ["Use certified disease-free seedlings.", "Avoid working in fields while wet.", "Disinfect tools between plants."]
+  },
+  "Septoria": {
+    label: "Septoria",
+    symptoms: "Small circular spots with grey centres and dark borders, mainly on lower leaves.",
+    treatment: ["Chlorothalonil or copper fungicide, every 7–10 days"],
+    organic: "Neem oil spray", cost: "₦1,600 – ₦2,600 / acre", recovery: "10–14 days",
+    prevention: ["Remove lower infected leaves early.", "Avoid overhead watering.", "Rotate crops annually."]
+  },
+  "Spider Mites": {
+    label: "Spider Mites",
+    symptoms: "Fine yellow speckling and webbing on the underside of leaves, worse in dry weather.",
+    treatment: ["Miticide such as abamectin"],
+    organic: "Insecticidal soap or neem oil spray", cost: "₦1,200 – ₦2,000 / acre", recovery: "5–10 days",
+    prevention: ["Keep plants watered — mites thrive under drought stress.", "Introduce predatory mites where possible.", "Avoid broad-spectrum insecticides that kill natural predators."]
+  },
+  "Target Spot": {
+    label: "Target Spot",
+    symptoms: "Brown lesions with concentric rings, similar to early blight but often larger.",
+    treatment: ["Azoxystrobin or chlorothalonil spray"],
+    organic: "Copper soap spray", cost: "₦1,800 – ₦2,800 / acre", recovery: "10–14 days",
+    prevention: ["Improve field drainage.", "Avoid dense planting.", "Remove crop debris after harvest."]
+  },
+  "Mosaic Virus": {
+    label: "Mosaic Virus",
+    symptoms: "Mottled light and dark green patches, distorted or curled leaves, stunted growth.",
+    treatment: ["No chemical cure — remove and destroy infected plants"],
+    organic: "Encourage beneficial insects that prey on aphid vectors", cost: "₦0 — no cure, prevention only", recovery: "Not recoverable, replant with a resistant variety",
+    prevention: ["Control aphids, which spread the virus.", "Use virus-resistant seed varieties.", "Disinfect tools between plants."]
+  },
+  "Yellow Curl Virus": {
+    label: "Yellow Curl Virus",
+    symptoms: "Upward curling, yellowing leaves and stunted plant growth, spread by whiteflies.",
+    treatment: ["No direct chemical cure — control the whitefly vector with insecticide"],
+    organic: "Yellow sticky traps plus neem oil against whiteflies", cost: "₦1,000 – ₦1,800 / acre (vector control)", recovery: "Not recoverable, remove infected plants",
+    prevention: ["Use whitefly-resistant tomato varieties.", "Install insect-proof netting in nurseries.", "Remove and destroy infected plants quickly."]
+  }
+},
+ha: {
+  "Healthy": {
+    label: "Lafiya",
+    symptoms: "Babu alamun cuta a bayyane. Launi da yanayin ganye suna cikin al'ada.",
+    treatment: [], organic: "", cost: "₦0", recovery: "—",
+    prevention: ["Ci gaba da duba gonar kowace kwana 3–4.", "Ka rike ban ruwa daidai, ka guji tarin ruwa.", "Canza amfanin gona kowace shekara domin karya zagayowar kwari."]
+  },
+  "Late Blight": {
+    label: "Late Blight (Ruɓar Marigayi)",
+    symptoms: "Baƙar fata mai ɗauke da ruwa da ke yaɗuwa cikin sauri, sau da yawa tare da farin naman gwari a ƙasa lokacin danshi.",
+    treatment: ["Mancozeb 80% WP, a fesa kowace kwana 7", "Maganin naman gwari na Copper a matsayin fesa na biyu"],
+    organic: "Fesa man Neem kowace kwana 5–7", cost: "₦2,000 – ₦3,000 / eka", recovery: "Kwana 7–14",
+    prevention: ["Ka guji ban ruwa daga sama da yamma.", "Ka bar sarari tsakanin shuke-shuke domin iska ta shiga.", "Cire kuma ƙone ganyen da cutar ta kama nan take."]
+  },
+  "Early Blight": {
+    label: "Early Blight (Ruɓar Wuri)",
+    symptoms: "Da'irori masu launin ruwan kasa (kamar manufa) suna bayyana a tsoffin ganyaye na ƙasa da farko.",
+    treatment: ["Fesa Chlorothalonil", "Mancozeb a matsayin madadi"],
+    organic: "Cakuda baking-soda da man Neem", cost: "₦1,500 – ₦2,500 / eka", recovery: "Kwana 10–14",
+    prevention: ["Yi mulch domin hana ƙasa yin tsalle zuwa ganyaye na ƙasa.", "Guji shuka iyalin tumatir na tsawon shekaru 2.", "Yi wa shuke-shuke turke domin ganyaye kada su taɓa ƙasa."]
+  },
+  "Leaf Mold": {
+    label: "Naman Gwari na Ganye (Leaf Mold)",
+    symptoms: "Fatun rawaya masu sauƙi a saman ganye tare da naman gwari mai launin kore mai laushi a ƙasa.",
+    treatment: ["Fesa maganin naman gwari na Copper", "Inganta shigar iska a greenhouse ko rufin inuwa"],
+    organic: "Fesa madara da aka narkar, sashi 1 na madara zuwa sashi 9 na ruwa", cost: "₦1,800 – ₦2,800 / eka", recovery: "Kwana 7–10",
+    prevention: ["Rage danshi kusa da shuke-shuke.", "Ka guji jiƙa ganyaye lokacin ban ruwa.", "Yanke ganyaye na ƙasa domin iska ta shiga."]
+  },
+  "Bacterial Spot": {
+    label: "Tabo na Ƙwayoyin Cuta (Bacterial Spot)",
+    symptoms: "Ƙananan tabo baƙaƙe masu kama da mai tare da zoben rawaya a ganyaye da 'ya'yan itace.",
+    treatment: ["Maganin ƙwayoyin cuta na Copper", "Fesa Streptomycin inda aka amince da shi a gida"],
+    organic: "Fesa sabulun Copper", cost: "₦2,200 – ₦3,200 / eka", recovery: "Kwana 10–21",
+    prevention: ["Yi amfani da 'yan shuka masu tabbacin rashin cuta.", "Ka guji aiki a gona lokacin da take jiƙa.", "Tsaftace kayan aiki tsakanin shuke-shuke."]
+  },
+  "Septoria": {
+    label: "Septoria",
+    symptoms: "Ƙananan tabo masu zagaye da tsakiya mai launin toka da gefuna baƙaƙe, galibi a ganyaye na ƙasa.",
+    treatment: ["Chlorothalonil ko maganin naman gwari na Copper, kowace kwana 7–10"],
+    organic: "Fesa man Neem", cost: "₦1,600 – ₦2,600 / eka", recovery: "Kwana 10–14",
+    prevention: ["Cire ganyayen ƙasa da cutar ta kama da wuri.", "Ka guji ban ruwa daga sama.", "Canza amfanin gona kowace shekara."]
+  },
+  "Spider Mites": {
+    label: "Kaska (Spider Mites)",
+    symptoms: "Ƙananan aibobi masu rawaya da yanar gizo a ƙarƙashin ganye, yana ƙara muni a lokacin rani.",
+    treatment: ["Maganin kaska irin su abamectin"],
+    organic: "Sabulun kwari ko fesa man Neem", cost: "₦1,200 – ₦2,000 / eka", recovery: "Kwana 5–10",
+    prevention: ["Ka ci gaba da ban ruwa — kaska suna ƙaruwa a lokacin fari.", "Kawo kaska masu cin wasu kaska idan zai yiwu.", "Ka guji magungunan kwari masu faɗi da ke kashe abokan gaba na dabi'a."]
+  },
+  "Target Spot": {
+    label: "Tabo Manufa (Target Spot)",
+    symptoms: "Miyagun tabo masu launin ruwan kasa da da'irori, kama da early blight amma galibi sun fi girma.",
+    treatment: ["Fesa Azoxystrobin ko chlorothalonil"],
+    organic: "Fesa sabulun Copper", cost: "₦1,800 – ₦2,800 / eka", recovery: "Kwana 10–14",
+    prevention: ["Inganta magudanar ruwa a gona.", "Ka guji shuka kusa-kusa.", "Cire ragowar amfanin gona bayan girbi."]
+  },
+  "Mosaic Virus": {
+    label: "Cutar Mosaic",
+    symptoms: "Fatun kore masu haske da duhu gauraye, ganyaye da suka karkace ko murtsuke, da tsayin girma da bai kai ba.",
+    treatment: ["Babu maganin sinadari — cire kuma lalata shuke-shuken da cutar ta kama"],
+    organic: "Ƙarfafa kwari masu amfani da ke cin aphid masu yaɗa cutar", cost: "₦0 — babu magani, rigakafi kawai", recovery: "Ba za a warke ba, sake shuka iri mai jurewa",
+    prevention: ["Sarrafa aphid, waɗanda ke yaɗa cutar.", "Yi amfani da iri masu jurewa da cutar.", "Tsaftace kayan aiki tsakanin shuke-shuke."]
+  },
+  "Yellow Curl Virus": {
+    label: "Cutar Curi Rawaya (Yellow Curl Virus)",
+    symptoms: "Ganyaye suna murtsukewa sama, suna rawaya, da tsayin shuka bai kai ba, ana yaɗa ta ta whiteflies.",
+    treatment: ["Babu magani na sinadari kai tsaye — sarrafa whitefly da maganin kwari"],
+    organic: "Tarko masu rawaya masu manne tare da man Neem domin yaƙi da whiteflies", cost: "₦1,000 – ₦1,800 / eka (sarrafa vector)", recovery: "Ba za a warke ba, cire shuke-shuken da cutar ta kama",
+    prevention: ["Yi amfani da irin tumatir masu jurewa da whitefly.", "Girka rufin kariya daga kwari a wuraren shuka 'yan itace.", "Cire kuma lalata shuke-shuken da cutar ta kama da sauri."]
+  }
+}
+};
+
+const i18n = {
+  en: {
+    appSub: "Crop disease detection for the field",
+    scanHeroTitle: "Scan a leaf",
+    scanHeroLead: "Point your camera at the affected leaf, or upload a photo you already have. Good light and a close, in-focus shot work best.",
+    takePhoto: "Take a photo",
+    uploadGallery: "Upload from gallery",
+    fineprint: "Live AI vision analysis · runs best with good lighting",
+    confirmPhoto: "Confirm photo",
+    confirmLead: "Make sure the affected area is clearly visible and in focus.",
+    analyzeLeaf: "Analyze leaf",
+    retakePhoto: "Retake photo",
+    scanCaptions: ["Reading leaf texture…", "Comparing against 10 known conditions…", "Estimating affected area…", "Finishing diagnosis…"],
+    diagnosisTitle: "Diagnosis",
+    modelConfidence: "model confidence",
+    recommendedTreatment: "Recommended treatment",
+    organicAlternative: "Organic alternative",
+    estCost: "Est. cost",
+    recoveryLabel: "Recovery",
+    keepHealthy: "Keep it healthy",
+    scanAnother: "Scan another leaf",
+    savedHistory: "Saved to history",
+    tabScan: "Scan", tabHistory: "History", tabGuide: "Guide",
+    historyTitle: "Diagnosis history",
+    historySub: "Every scan saved on this device",
+    noScans: "No scans yet",
+    noScansSub: "Scan a leaf and it will show up here, saved on this device.",
+    loadingHistory: "Loading history…",
+    historyError: "Could not load history.",
+    guideTitle: "Offline guide",
+    guideSub: "Symptoms, treatment and prevention — no signal needed",
+    symptomsLabel: "Symptoms.", treatmentLabel: "Treatment.", organicOptionLabel: "Organic option.", preventionLabel: "Prevention.",
+    unknownCrop: "Unknown crop",
+    noSignificantDamage: "No significant damage detected",
+    affectedPct: pct => "~" + pct + "% of visible leaf area affected",
+    severity: {Healthy:"Healthy", Mild:"Mild", Moderate:"Moderate", Severe:"Severe"}
+  },
+  ha: {
+    appSub: "Gano cutar amfanin gona a gona",
+    scanHeroTitle: "Duba ganyen shuka",
+    scanHeroLead: "Nuna kyamararka zuwa ganyen da abin ya shafa, ko ka loda hoto da kake da shi. Haske mai kyau da hoto mai kusa kuma bayyananne sun fi kyau.",
+    takePhoto: "Ɗauki hoto",
+    uploadGallery: "Loda daga hotuna",
+    fineprint: "Nazarin AI kai tsaye · yana aiki mafi kyau da haske mai kyau",
+    confirmPhoto: "Tabbatar da hoto",
+    confirmLead: "Tabbatar sashin da abin ya shafa yana bayyane sosai kuma a fili.",
+    analyzeLeaf: "Bincika ganye",
+    retakePhoto: "Ɗauki hoto kuma",
+    scanCaptions: ["Ana duba fatar ganye…", "Ana kwatanta da cututtuka 10 da aka sani…", "Ana kiyasta sashin da abin ya shafa…", "Ana kammala bincike…"],
+    diagnosisTitle: "Bincike",
+    modelConfidence: "tabbacin tsarin AI",
+    recommendedTreatment: "Shawarar magani",
+    organicAlternative: "Madadin magani na halitta",
+    estCost: "Kimanin farashi",
+    recoveryLabel: "Lokacin warkewa",
+    keepHealthy: "Ci gaba da lafiya",
+    scanAnother: "Duba wani ganye",
+    savedHistory: "An ajiye a tarihi",
+    tabScan: "Duba", tabHistory: "Tarihi", tabGuide: "Jagora",
+    historyTitle: "Tarihin bincike",
+    historySub: "Kowane bincike da aka ajiye a wannan na'ura",
+    noScans: "Babu bincike tukuna",
+    noScansSub: "Duba ganye kuma zai bayyana anan, an ajiye a wannan na'ura.",
+    loadingHistory: "Ana loda tarihi…",
+    historyError: "An kasa loda tarihi.",
+    guideTitle: "Jagora ba tare da intanet ba",
+    guideSub: "Alamu, magani da rigakafi — ba a buƙatar hanyar sadarwa",
+    symptomsLabel: "Alamu.", treatmentLabel: "Magani.", organicOptionLabel: "Zaɓin halitta.", preventionLabel: "Rigakafi.",
+    unknownCrop: "Amfanin gona ba a sani ba",
+    noSignificantDamage: "Ba a samu babbar illa ba",
+    affectedPct: pct => "~" + pct + "% na fatar ganyen abin ya shafa",
+    severity: {Healthy:"Lafiya", Mild:"Kaɗan", Moderate:"Matsakaici", Severe:"Mai tsanani"}
+  }
+};
+
+let currentLang = 'en';
+let selectedFile = null;
+let captionTimer = null;
+let lastDiagnosis = null;
+
+function pad(n){return n<10?'0'+n:n;}
+function updateClock(){const d=new Date();document.getElementById('clock').textContent=pad(d.getHours())+':'+pad(d.getMinutes());}
+updateClock(); setInterval(updateClock, 30000);
+
+function setLang(lang){
+  currentLang = lang;
+  document.getElementById('langEnBtn').classList.toggle('active', lang==='en');
+  document.getElementById('langHaBtn').classList.toggle('active', lang==='ha');
+  applyLanguage();
+  window.storage.set('settings:lang', lang, false).catch(()=>{});
+}
+
+function applyLanguage(){
+  const t = i18n[currentLang];
+  document.getElementById('appSubText').textContent = t.appSub;
+  document.getElementById('scanHeroTitle').textContent = t.scanHeroTitle;
+  document.getElementById('scanHeroLead').textContent = t.scanHeroLead;
+  document.getElementById('takePhotoText').textContent = t.takePhoto;
+  document.getElementById('uploadGalleryText').textContent = t.uploadGallery;
+  document.getElementById('fineprintText').textContent = t.fineprint;
+  document.getElementById('confirmPhotoTitle').textContent = t.confirmPhoto;
+  document.getElementById('confirmLeadText').textContent = t.confirmLead;
+  document.getElementById('analyzeLeafText').textContent = t.analyzeLeaf;
+  document.getElementById('retakePhotoText').textContent = t.retakePhoto;
+  document.getElementById('diagnosisTitleText').textContent = t.diagnosisTitle;
+  document.getElementById('modelConfidenceLabel').textContent = t.modelConfidence;
+  document.getElementById('recommendedTreatmentLabel').textContent = t.recommendedTreatment;
+  document.getElementById('organicAlternativeLabel').textContent = t.organicAlternative;
+  document.getElementById('estCostLabel').textContent = t.estCost;
+  document.getElementById('recoveryLabelText').textContent = t.recoveryLabel;
+  document.getElementById('keepHealthyLabel').textContent = t.keepHealthy;
+  document.getElementById('scanAnotherText').textContent = t.scanAnother;
+  document.getElementById('savedToHistoryText').textContent = t.savedHistory;
+  document.getElementById('tabScanText').textContent = t.tabScan;
+  document.getElementById('tabHistoryText').textContent = t.tabHistory;
+  document.getElementById('tabGuideText').textContent = t.tabGuide;
+  document.getElementById('historyTitleText').textContent = t.historyTitle;
+  document.getElementById('historySubText').textContent = t.historySub;
+  document.getElementById('guideTitleText').textContent = t.guideTitle;
+  document.getElementById('guideSubText').textContent = t.guideSub;
+
+  renderGuide();
+  if(lastDiagnosis){ renderResult(lastDiagnosis, false); }
+  const historyTabActive = document.querySelector('.tab[data-tabbtn="history"]').classList.contains('active');
+  if(historyTabActive){ renderHistory(); }
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tabbtn===tab));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  if(tab==='scan'){
+    const target = document.getElementById('view-result').dataset.locked ? 'view-result' : 'view-upload';
+    document.getElementById(target).classList.add('active');
+  } else if(tab==='history'){
+    document.getElementById('view-history').classList.add('active');
+    renderHistory();
+  } else if(tab==='guide'){
+    document.getElementById('view-guide').classList.add('active');
+  }
+}
+
+function goTo(step){
+  document.querySelectorAll('[data-tab="scan"]').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+step).classList.add('active');
+}
+
+function resetScan(){
+  selectedFile = null;
+  lastDiagnosis = null;
+  document.getElementById('view-result').dataset.locked = '';
+  document.getElementById('savedTag').style.display = 'none';
+  goTo('upload');
+}
+
+function handleFile(file){
+  if(!file) return;
+  selectedFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('previewImg').src = url;
+  goTo('preview');
+}
+document.getElementById('cameraInput').addEventListener('change', e=>handleFile(e.target.files[0]));
+document.getElementById('galleryInput').addEventListener('change', e=>handleFile(e.target.files[0]));
+
+function fileToBase64(file){
+  return new Promise((resolve, reject)=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result.split(',')[1]);
+    r.onerror = ()=>reject(new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+function severityFromPct(pct){
+  if(pct < 10) return 'Healthy';
+  if(pct < 30) return 'Mild';
+  if(pct < 60) return 'Moderate';
+  return 'Severe';
+}
+function severityColor(sev){
+  if(sev==='Healthy' || sev==='Mild') return '#40916C';
+  if(sev==='Moderate') return '#E8A33D';
+  return '#B3401E';
+}
+
+async function runAnalysis(){
+  goTo('analyzing');
+  let ci = 0;
+  const captions = i18n[currentLang].scanCaptions;
+  document.getElementById('scanCaption').textContent = captions[0];
+  captionTimer = setInterval(()=>{
+    ci = (ci+1) % captions.length;
+    document.getElementById('scanCaption').textContent = captions[ci];
+  }, 900);
+
+  let diagnosis;
+  try{
+    const base64 = await fileToBase64(selectedFile);
+    const mediaType = selectedFile.type || 'image/jpeg';
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: 'You are a plant pathology vision classifier for a Nigerian crop disease detection app. Look at the leaf photo and identify: 1) the crop type, 2) which single condition best matches from exactly this list: Healthy, Late Blight, Early Blight, Leaf Mold, Bacterial Spot, Septoria, Spider Mites, Target Spot, Mosaic Virus, Yellow Curl Virus, 3) your confidence from 0 to 100, 4) the estimated percentage of visible leaf area affected from 0 to 100 (use a low number like 2-8 for Healthy). Respond with ONLY raw JSON and nothing else, no markdown fences, no explanation, in exactly this shape: {"crop":"Tomato","disease":"Late Blight","confidence":96.8,"infected_percentage":45}',
+        messages: [{
+          role: 'user',
+          content: [
+            {type: 'image', source: {type: 'base64', media_type: mediaType, data: base64}},
+            {type: 'text', text: 'Analyze this leaf photo and respond with only the JSON.'}
+          ]
+        }]
+      })
+    });
+    const data = await response.json();
+    const textBlock = (data.content || []).find(b=>b.type==='text');
+    let raw = textBlock ? textBlock.text : '{}';
+    raw = raw.replace(/```json|```/g, '').trim();
+    diagnosis = JSON.parse(raw);
+  }catch(err){
+    console.error('Analysis error:', err);
+    diagnosis = {crop: 'Unknown', disease: 'Healthy', confidence: 0, infected_percentage: 0, error: true};
+  }
+
+  clearInterval(captionTimer);
+  renderResult(diagnosis);
+}
+
+function renderResult(d, save){
+  if(save === undefined) save = true;
+  lastDiagnosis = d;
+  const t = i18n[currentLang];
+  const db = treatmentDB[currentLang];
+  const disease = db[d.disease] ? d.disease : 'Healthy';
+  const info = db[disease];
+  const pct = typeof d.infected_percentage === 'number' ? Math.max(0, Math.min(100, d.infected_percentage)) : 0;
+  const severity = disease === 'Healthy' ? 'Healthy' : severityFromPct(pct);
+  const conf = typeof d.confidence === 'number' ? d.confidence : 0;
+
+  document.getElementById('resCrop').textContent = d.crop || t.unknownCrop;
+  document.getElementById('resDisease').textContent = info.label;
+  document.getElementById('resConfidence').textContent = (d.error ? '—' : conf.toFixed(1) + '%');
+
+  document.getElementById('sevLabel').textContent = t.severity[severity] || severity;
+  document.getElementById('sevDesc').textContent = disease==='Healthy' ? t.noSignificantDamage : t.affectedPct(Math.round(pct));
+  const color = severityColor(severity);
+  document.getElementById('sevLabel').style.color = color;
+  const fillH = Math.max(6, Math.min(60, (pct/100)*60));
+  const fillRect = document.getElementById('sevFillRect');
+  fillRect.setAttribute('y', 60 - fillH);
+  fillRect.setAttribute('height', fillH);
+  fillRect.setAttribute('fill', color);
+
+  const treatBlock = document.getElementById('treatmentBlock');
+  const healthyBlock = document.getElementById('healthyBlock');
+  if(disease === 'Healthy'){
+    treatBlock.style.display = 'none';
+    healthyBlock.style.display = 'block';
+    document.getElementById('preventList').innerHTML = info.prevention.map(p=>'<div class="pill"><span class="dot dot-treat"></span><span>'+p+'</span></div>').join('');
+  }else{
+    treatBlock.style.display = 'block';
+    healthyBlock.style.display = 'none';
+    document.getElementById('treatList').innerHTML = info.treatment.map(t=>'<div class="pill"><span class="dot dot-treat"></span><span>'+t+'</span></div>').join('');
+    document.getElementById('organicText').textContent = info.organic;
+    document.getElementById('costText').textContent = info.cost;
+    document.getElementById('recoveryText').textContent = info.recovery;
+  }
+
+  document.getElementById('view-result').dataset.locked = '1';
+  if(save){
+    document.getElementById('savedTag').style.display = 'none';
+    goTo('result');
+    saveHistoryEntry({crop: d.crop || 'Unknown', disease, confidence: conf, severity, pct});
+  }
+}
+
+async function saveHistoryEntry(entry){
+  try{
+    const key = 'history:' + Date.now();
+    const value = JSON.stringify({...entry, date: new Date().toISOString()});
+    const result = await window.storage.set(key, value, false);
+    if(result){
+      document.getElementById('savedTag').style.display = 'flex';
+    }
+  }catch(err){
+    console.error('Storage error:', err);
+  }
+}
+
+function chipStyle(severity){
+  const color = severityColor(severity);
+  return 'background:' + color + '22; color:' + color + ';';
+}
+
+async function renderHistory(){
+  const t = i18n[currentLang];
+  const db = treatmentDB[currentLang];
+  const listEl = document.getElementById('historyList');
+  listEl.innerHTML = '<div class="fineprint" style="padding-top:20px;">' + t.loadingHistory + '</div>';
+  try{
+    const listing = await window.storage.list('history:', false);
+    const keys = (listing && listing.keys) ? listing.keys : [];
+    if(keys.length === 0){
+      listEl.innerHTML = '';
+      listEl.parentElement.querySelector('.empty-state')?.remove();
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.style.minHeight = '400px';
+      empty.innerHTML = '<div class="display">' + t.noScans + '</div><div style="font-size:13px;max-width:220px;">' + t.noScansSub + '</div>';
+      listEl.appendChild(empty);
+      return;
+    }
+    const entries = [];
+    for(const k of keys){
+      try{
+        const res = await window.storage.get(k, false);
+        if(res && res.value){
+          entries.push(JSON.parse(res.value));
+        }
+      }catch(e){}
+    }
+    entries.sort((a,b)=> new Date(b.date) - new Date(a.date));
+    listEl.innerHTML = entries.map(e=>{
+      const d = new Date(e.date);
+      const dateStr = d.toLocaleDateString(undefined, {month:'short', day:'numeric'}) + ' · ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+      const diseaseLabel = (db[e.disease] && db[e.disease].label) ? db[e.disease].label : e.disease;
+      const sevLabel = t.severity[e.severity] || e.severity;
+      return '<div class="history-row">'
+        + '<div class="history-main"><div class="h-disease">' + e.crop + ' — ' + diseaseLabel + '</div><div class="h-meta">' + dateStr + '</div></div>'
+        + '<div class="h-right"><div class="h-conf mono">' + (e.confidence ? e.confidence.toFixed(1) : '0') + '%</div><span class="chip" style="' + chipStyle(e.severity) + '">' + sevLabel + '</span></div>'
+        + '</div>';
+    }).join('');
+  }catch(err){
+    console.error('History load error:', err);
+    listEl.innerHTML = '<div class="fineprint" style="padding-top:20px;">' + t.historyError + '</div>';
+  }
+}
+
+function renderGuide(){
+  const order = ["Healthy","Late Blight","Early Blight","Leaf Mold","Bacterial Spot","Septoria","Spider Mites","Target Spot","Mosaic Virus","Yellow Curl Virus"];
+  const t = i18n[currentLang];
+  const db = treatmentDB[currentLang];
+  const listEl = document.getElementById('guideList');
+  const openNames = new Set(Array.from(listEl.querySelectorAll('details[open]')).map(el=>el.dataset.name));
+  listEl.innerHTML = order.map(name=>{
+    const info = db[name];
+    const treatHtml = info.treatment.length
+      ? '<div class="g-block"><b>' + t.treatmentLabel + '</b> ' + info.treatment.join('; ') + '</div>'
+      : '';
+    const organicHtml = info.organic ? '<div class="g-block"><b>' + t.organicOptionLabel + '</b> ' + info.organic + '</div>' : '';
+    const preventHtml = '<div class="g-block"><b>' + t.preventionLabel + '</b> ' + info.prevention.join(' ') + '</div>';
+    return '<details class="guide-item" data-name="' + name + '"' + (openNames.has(name) ? ' open' : '') + '>'
+      + '<summary class="guide-summary"><div class="guide-summary-row"><span class="guide-name">' + info.label + '</span>'
+      + '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div></summary>'
+      + '<div class="guide-body"><div class="g-block"><b>' + t.symptomsLabel + '</b> ' + info.symptoms + '</div>' + treatHtml + organicHtml + preventHtml + '</div>'
+      + '</details>';
+  }).join('');
+}
+renderGuide();
+
+(async function initLang(){
+  try{
+    const saved = await window.storage.get('settings:lang', false);
+    if(saved && saved.value && i18n[saved.value]){
+      currentLang = saved.value;
+      document.getElementById('langEnBtn').classList.toggle('active', currentLang==='en');
+      document.getElementById('langHaBtn').classList.toggle('active', currentLang==='ha');
+      applyLanguage();
+    }
+  }catch(e){ /* no saved preference yet, default to English */ }
+})();
+</script>
+</body>
+</html>
